@@ -6,9 +6,10 @@ local libraryOpen = true
 
 -- Create the UI container
 function kijb:CreateLibrary(title)
+    local UIS = game:GetService("UserInputService")
+
     local ScreenGui = Instance.new("ScreenGui")
     local MainFrame = Instance.new("Frame")
-    local UIListLayout = Instance.new("UIListLayout")
     local TitleLabel = Instance.new("TextLabel")
     local ToggleButton = Instance.new("TextButton")
     local TabsHolder = Instance.new("Frame")
@@ -19,16 +20,12 @@ function kijb:CreateLibrary(title)
 
     -- Main UI Frame
     MainFrame.Parent = ScreenGui
-    MainFrame.Size = UDim2.new(0, 400, 0, 300)
-    MainFrame.Position = UDim2.new(0.5, -200, 0.5, -150)
+    MainFrame.Size = UDim2.new(0, 400, 0, 350)
+    MainFrame.Position = UDim2.new(0.5, -200, 0.5, -175)
     MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
     MainFrame.BorderSizePixel = 0
     MainFrame.Active = true
     MainFrame.Draggable = true
-
-    -- UI Layout
-    UIListLayout.Parent = MainFrame
-    UIListLayout.Padding = UDim.new(0, 5)
 
     -- Title Label
     TitleLabel.Parent = MainFrame
@@ -87,11 +84,9 @@ function kijb:CreateLibrary(title)
 
         TabButton.MouseButton1Click:Connect(function()
             for _, tab in pairs(Library.Tabs) do
-                tab:TweenPosition(UDim2.new(0, 0, 1, -90), "Out", "Quad", 0.2, true)
                 tab.Visible = false
             end
             TabFrame.Visible = true
-            TabFrame:TweenPosition(UDim2.new(0, 0, 0, 90), "Out", "Quad", 0.2, true)
         end)
 
         local Tab = {}
@@ -123,30 +118,28 @@ function kijb:CreateLibrary(title)
             SliderButton.Size = UDim2.new(0, 10, 1, 0)
             SliderButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 
-            local dragging = false
+            local function updateSlider(input)
+                local absSize = SliderBar.AbsoluteSize.X
+                local relPos = math.clamp((input.Position.X - SliderBar.AbsolutePosition.X) / absSize, 0, 1)
+                SliderButton.Position = UDim2.new(relPos, -5, 0, 0)
+                local value = math.floor(min + (max - min) * relPos)
+                SliderLabel.Text = text .. ": " .. value
+                callback(value)
+            end
 
             SliderButton.InputBegan:Connect(function(input)
-                if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                    dragging = true
+                if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                    updateSlider(input)
                 end
             end)
 
-            SliderButton.InputEnded:Connect(function(input)
-                if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                    dragging = false
+            UIS.InputChanged:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+                    updateSlider(input)
                 end
             end)
 
-            game:GetService("UserInputService").InputChanged:Connect(function(input)
-                if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-                    local absSize = SliderBar.AbsoluteSize.X
-                    local relPos = math.clamp((input.Position.X - SliderBar.AbsolutePosition.X) / absSize, 0, 1)
-                    SliderButton.Position = UDim2.new(relPos, -5, 0, 0)
-                    local value = math.floor(min + (max - min) * relPos)
-                    SliderLabel.Text = text .. ": " .. value
-                    callback(value)
-                end
-            end)
+            return SliderFrame
         end
 
         return Tab
@@ -158,7 +151,7 @@ function kijb:CreateLibrary(title)
     end)
 
     -- Keybind Toggle
-    game:GetService("UserInputService").InputBegan:Connect(function(input, processed)
+    UIS.InputBegan:Connect(function(input, processed)
         if not processed and input.KeyCode == toggleKey then
             MainFrame.Visible = not MainFrame.Visible
         end
