@@ -1,6 +1,6 @@
 local kijb = {}
 
--- Toggle Keybind
+-- UI Toggle Keybind
 local toggleKey = Enum.KeyCode.RightShift
 local libraryOpen = true
 
@@ -17,11 +17,11 @@ function kijb:CreateLibrary(title)
     ScreenGui.Parent = game:GetService("CoreGui")
     ScreenGui.ResetOnSpawn = false
 
-    -- Main Frame
+    -- Main UI Frame
     MainFrame.Parent = ScreenGui
     MainFrame.Size = UDim2.new(0, 400, 0, 300)
     MainFrame.Position = UDim2.new(0.5, -200, 0.5, -150)
-    MainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+    MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
     MainFrame.BorderSizePixel = 0
     MainFrame.Active = true
     MainFrame.Draggable = true
@@ -33,7 +33,7 @@ function kijb:CreateLibrary(title)
     -- Title Label
     TitleLabel.Parent = MainFrame
     TitleLabel.Size = UDim2.new(1, 0, 0, 40)
-    TitleLabel.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    TitleLabel.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
     TitleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
     TitleLabel.Text = title
     TitleLabel.Font = Enum.Font.GothamBold
@@ -43,7 +43,7 @@ function kijb:CreateLibrary(title)
     ToggleButton.Parent = MainFrame
     ToggleButton.Size = UDim2.new(0, 100, 0, 30)
     ToggleButton.Position = UDim2.new(1, -110, 0, 5)
-    ToggleButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+    ToggleButton.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
     ToggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
     ToggleButton.Text = "Toggle"
     ToggleButton.Font = Enum.Font.GothamBold
@@ -53,7 +53,7 @@ function kijb:CreateLibrary(title)
     TabsHolder.Parent = MainFrame
     TabsHolder.Size = UDim2.new(1, 0, 0, 40)
     TabsHolder.Position = UDim2.new(0, 0, 0, 50)
-    TabsHolder.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+    TabsHolder.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 
     TabsList.Parent = TabsHolder
     TabsList.FillDirection = Enum.FillDirection.Horizontal
@@ -87,47 +87,15 @@ function kijb:CreateLibrary(title)
 
         TabButton.MouseButton1Click:Connect(function()
             for _, tab in pairs(Library.Tabs) do
+                tab:TweenPosition(UDim2.new(0, 0, 1, -90), "Out", "Quad", 0.2, true)
                 tab.Visible = false
             end
             TabFrame.Visible = true
+            TabFrame:TweenPosition(UDim2.new(0, 0, 0, 90), "Out", "Quad", 0.2, true)
         end)
 
         local Tab = {}
         Tab.Frame = TabFrame
-
-        function Tab:AddButton(text, callback)
-            local Button = Instance.new("TextButton")
-            Button.Parent = TabFrame
-            Button.Size = UDim2.new(1, 0, 0, 40)
-            Button.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-            Button.TextColor3 = Color3.fromRGB(255, 255, 255)
-            Button.Text = text
-            Button.Font = Enum.Font.GothamBold
-            Button.TextSize = 16
-
-            Button.MouseButton1Click:Connect(function()
-                callback()
-            end)
-        end
-
-        function Tab:AddToggle(text, callback)
-            local Toggle = Instance.new("TextButton")
-            Toggle.Parent = TabFrame
-            Toggle.Size = UDim2.new(1, 0, 0, 40)
-            Toggle.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-            Toggle.TextColor3 = Color3.fromRGB(255, 255, 255)
-            Toggle.Text = text .. " [OFF]"
-            Toggle.Font = Enum.Font.GothamBold
-            Toggle.TextSize = 16
-
-            local state = false
-
-            Toggle.MouseButton1Click:Connect(function()
-                state = not state
-                Toggle.Text = text .. (state and " [ON]" or " [OFF]")
-                callback(state)
-            end)
-        end
 
         function Tab:AddSlider(text, min, max, default, callback)
             local SliderFrame = Instance.new("Frame")
@@ -144,20 +112,40 @@ function kijb:CreateLibrary(title)
             SliderLabel.TextSize = 16
             SliderLabel.BackgroundTransparency = 1
 
-            local SliderButton = Instance.new("TextButton")
-            SliderButton.Parent = SliderFrame
-            SliderButton.Size = UDim2.new(0.3, 0, 1, 0)
-            SliderButton.Position = UDim2.new(0.7, 0, 0, 0)
-            SliderButton.Text = "Adjust"
-            SliderButton.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
-            SliderButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+            local SliderBar = Instance.new("Frame")
+            SliderBar.Parent = SliderFrame
+            SliderBar.Size = UDim2.new(0.3, 0, 0.5, 0)
+            SliderBar.Position = UDim2.new(0.7, 0, 0.25, 0)
+            SliderBar.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
 
-            local sliderValue = default
+            local SliderButton = Instance.new("Frame")
+            SliderButton.Parent = SliderBar
+            SliderButton.Size = UDim2.new(0, 10, 1, 0)
+            SliderButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 
-            SliderButton.MouseButton1Click:Connect(function()
-                sliderValue = math.clamp(sliderValue + 1, min, max)
-                SliderLabel.Text = text .. ": " .. sliderValue
-                callback(sliderValue)
+            local dragging = false
+
+            SliderButton.InputBegan:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                    dragging = true
+                end
+            end)
+
+            SliderButton.InputEnded:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                    dragging = false
+                end
+            end)
+
+            game:GetService("UserInputService").InputChanged:Connect(function(input)
+                if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+                    local absSize = SliderBar.AbsoluteSize.X
+                    local relPos = math.clamp((input.Position.X - SliderBar.AbsolutePosition.X) / absSize, 0, 1)
+                    SliderButton.Position = UDim2.new(relPos, -5, 0, 0)
+                    local value = math.floor(min + (max - min) * relPos)
+                    SliderLabel.Text = text .. ": " .. value
+                    callback(value)
+                end
             end)
         end
 
