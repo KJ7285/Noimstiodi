@@ -1,0 +1,156 @@
+local kijb = {}
+
+-- Services
+local UIS = game:GetService("UserInputService")
+
+-- Create main UI container
+function kijb:CreateLibrary(title)
+    local ScreenGui = Instance.new("ScreenGui")
+    local MainFrame = Instance.new("Frame")
+    local UIListLayout = Instance.new("UIListLayout")
+    local TitleLabel = Instance.new("TextLabel")
+    local ToggleButton = Instance.new("TextButton")
+    local ScrollingFrame = Instance.new("ScrollingFrame")
+    local UIScale = Instance.new("UIScale")
+
+    ScreenGui.Parent = game:GetService("CoreGui")
+    ScreenGui.ResetOnSpawn = false
+
+    MainFrame.Parent = ScreenGui
+    MainFrame.Size = UDim2.new(0, 400, 0, 350)
+    MainFrame.Position = UDim2.new(0.5, -200, 0.5, -175)
+    MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    MainFrame.BorderSizePixel = 0
+    MainFrame.Active = true
+    MainFrame.Draggable = true
+    MainFrame.Visible = true
+
+    -- Smooth Open/Close Animation
+    local function ToggleUI()
+        MainFrame.Visible = not MainFrame.Visible
+    end
+
+    -- Toggle UI Button
+    ToggleButton.Parent = ScreenGui
+    ToggleButton.Size = UDim2.new(0, 100, 0, 40)
+    ToggleButton.Position = UDim2.new(0, 20, 0, 20)
+    ToggleButton.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
+    ToggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    ToggleButton.Text = "Toggle UI"
+    ToggleButton.Font = Enum.Font.SourceSansBold
+    ToggleButton.TextSize = 16
+    ToggleButton.MouseButton1Click:Connect(ToggleUI)
+
+    -- Tabs and Sections
+    local Tabs = {}
+
+    function kijb:CreateTab(name)
+        local Tab = {}
+        local TabFrame = Instance.new("Frame")
+        local TabButton = Instance.new("TextButton")
+
+        TabFrame.Parent = MainFrame
+        TabFrame.Size = UDim2.new(1, 0, 0, 300)
+        TabFrame.BackgroundTransparency = 1
+        TabFrame.Visible = #Tabs == 0 -- Show first tab by default
+
+        TabButton.Parent = MainFrame
+        TabButton.Size = UDim2.new(0, 100, 0, 40)
+        TabButton.Text = name
+        TabButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+        TabButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+
+        function Tab:Show()
+            for _, t in pairs(Tabs) do
+                t.Frame.Visible = false
+            end
+            TabFrame.Visible = true
+        end
+
+        TabButton.MouseButton1Click:Connect(function()
+            Tab:Show()
+        end)
+
+        Tab.Frame = TabFrame
+        table.insert(Tabs, Tab)
+        return Tab
+    end
+
+    -- Buttons
+    function kijb:CreateButton(tab, text, callback)
+        local Button = Instance.new("TextButton")
+        Button.Parent = tab.Frame
+        Button.Size = UDim2.new(1, 0, 0, 40)
+        Button.Text = text
+        Button.TextColor3 = Color3.fromRGB(255, 255, 255)
+        Button.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+        Button.MouseButton1Click:Connect(callback)
+    end
+
+    -- Toggles
+    function kijb:CreateToggle(tab, text, callback)
+        local Toggle = Instance.new("TextButton")
+        Toggle.Parent = tab.Frame
+        Toggle.Size = UDim2.new(1, 0, 0, 40)
+        Toggle.Text = text .. " [OFF]"
+        Toggle.TextColor3 = Color3.fromRGB(255, 255, 255)
+        Toggle.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+
+        local state = false
+        Toggle.MouseButton1Click:Connect(function()
+            state = not state
+            Toggle.Text = text .. (state and " [ON]" or " [OFF]")
+            callback(state)
+        end)
+    end
+
+    -- Real Sliders (Mobile & PC)
+    function kijb:CreateSlider(tab, text, min, max, default, callback)
+        local SliderFrame = Instance.new("Frame")
+        local SliderLabel = Instance.new("TextLabel")
+        local SliderBar = Instance.new("Frame")
+        local SliderButton = Instance.new("TextButton")
+
+        SliderFrame.Parent = tab.Frame
+        SliderFrame.Size = UDim2.new(1, 0, 0, 40)
+        SliderFrame.BackgroundTransparency = 1
+
+        SliderLabel.Parent = SliderFrame
+        SliderLabel.Size = UDim2.new(0.7, 0, 1, 0)
+        SliderLabel.Text = text .. ": " .. default
+        SliderLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+        SliderLabel.BackgroundTransparency = 1
+
+        SliderBar.Parent = SliderFrame
+        SliderBar.Size = UDim2.new(0.3, 0, 1, 0)
+        SliderBar.Position = UDim2.new(0.7, 0, 0, 0)
+        SliderBar.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+
+        SliderButton.Parent = SliderBar
+        SliderButton.Size = UDim2.new(0, 10, 1, 0)
+        SliderButton.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
+
+        local sliderValue = default
+
+        local function UpdateSlider(input)
+            local pos = math.clamp((input.Position.X - SliderBar.AbsolutePosition.X) / SliderBar.AbsoluteSize.X, 0, 1)
+            sliderValue = math.floor(min + (max - min) * pos)
+            SliderLabel.Text = text .. ": " .. sliderValue
+            SliderButton.Position = UDim2.new(pos, -5, 0, 0)
+            callback(sliderValue)
+        end
+
+        SliderButton.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                input.Changed:Connect(function()
+                    if input.UserInputState == Enum.UserInputState.End then return end
+                    UpdateSlider(input)
+                end)
+            end
+        end)
+    end
+
+    return kijb
+end
+
+return kijb
