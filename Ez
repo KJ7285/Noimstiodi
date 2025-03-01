@@ -18,15 +18,48 @@ function kijb:CreateLibrary(title)
     MainFrame.Parent = ScreenGui
     MainFrame.Size = UDim2.new(0, 420, 0, 380)
     MainFrame.Position = UDim2.new(0.5, -210, 0.5, -190)
-    MainFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 40)
+    MainFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 45)
     MainFrame.BorderSizePixel = 0
     MainFrame.ClipsDescendants = true
     MainFrame.Active = true
 
-    -- Add corner radius
+    -- Add rounded corners
     local UICorner = Instance.new("UICorner")
-    UICorner.CornerRadius = UDim.new(0, 10)
+    UICorner.CornerRadius = UDim.new(0, 12)
     UICorner.Parent = MainFrame
+
+    -- Dragging System
+    local dragging, dragInput, dragStart, startPos
+    local function UpdateInput(input)
+        local delta = input.Position - dragStart
+        local newPosition = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        TweenService:Create(MainFrame, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Position = newPosition}):Play()
+    end
+
+    MainFrame.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = true
+            dragStart = input.Position
+            startPos = MainFrame.Position
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    dragging = false
+                end
+            end)
+        end
+    end)
+
+    MainFrame.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseMovement then
+            dragInput = input
+        end
+    end)
+
+    UserInputService.InputChanged:Connect(function(input)
+        if input == dragInput and dragging then
+            UpdateInput(input)
+        end
+    end)
 
     -- Title Label
     TitleLabel.Parent = MainFrame
@@ -70,15 +103,12 @@ function kijb:CreateLibrary(title)
         TabButton.Font = Enum.Font.GothamBold
         TabButton.TextSize = 14
 
-        local TabFrame = Instance.new("ScrollingFrame")
+        local TabFrame = Instance.new("Frame")
         TabFrame.Parent = MainFrame
         TabFrame.Size = UDim2.new(1, 0, 1, -100)
         TabFrame.Position = UDim2.new(0, 0, 0, 100)
         TabFrame.BackgroundTransparency = 1
         TabFrame.Visible = false
-        TabFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
-        TabFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
-        TabFrame.ScrollBarThickness = 5
 
         local TabList = Instance.new("UIListLayout")
         TabList.Parent = TabFrame
@@ -96,37 +126,28 @@ function kijb:CreateLibrary(title)
         local Tab = {}
         Tab.Frame = TabFrame
 
-        function Tab:AddButton(text, callback)
-            local Button = Instance.new("TextButton")
-            Button.Parent = TabFrame
-            Button.Size = UDim2.new(1, -20, 0, 40)
-            Button.BackgroundColor3 = Color3.fromRGB(50, 150, 255)
-            Button.TextColor3 = Color3.fromRGB(255, 255, 255)
-            Button.Text = text
-            Button.Font = Enum.Font.GothamBold
-            Button.TextSize = 16
+        function Tab:AddSlider(text, min, max, default, callback)
+            local SliderFrame = Instance.new("Frame")
+            SliderFrame.Parent = TabFrame
+            SliderFrame.Size = UDim2.new(1, 0, 0, 50)
+            SliderFrame.BackgroundTransparency = 1
 
-            Button.MouseButton1Click:Connect(function()
-                callback()
-            end)
-        end
+            local SliderLabel = Instance.new("TextLabel")
+            SliderLabel.Parent = SliderFrame
+            SliderLabel.Text = text .. ": " .. default
+            SliderLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+            SliderLabel.Font = Enum.Font.GothamBold
+            SliderLabel.TextSize = 16
+            SliderLabel.BackgroundTransparency = 1
 
-        function Tab:AddToggle(text, callback)
-            local Toggle = Instance.new("TextButton")
-            Toggle.Parent = TabFrame
-            Toggle.Size = UDim2.new(1, -20, 0, 40)
-            Toggle.BackgroundColor3 = Color3.fromRGB(255, 100, 100)
-            Toggle.TextColor3 = Color3.fromRGB(255, 255, 255)
-            Toggle.Text = text .. " [OFF]"
-            Toggle.Font = Enum.Font.GothamBold
-            Toggle.TextSize = 16
+            local SliderButton = Instance.new("TextButton")
+            SliderButton.Parent = SliderFrame
+            SliderButton.Size = UDim2.new(0.3, 0, 0.5, 0)
+            SliderButton.Position = UDim2.new(0.7, 0, 0.25, 0)
+            SliderButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 
-            local toggled = false
-            Toggle.MouseButton1Click:Connect(function()
-                toggled = not toggled
-                Toggle.BackgroundColor3 = toggled and Color3.fromRGB(100, 255, 100) or Color3.fromRGB(255, 100, 100)
-                Toggle.Text = text .. (toggled and " [ON]" or " [OFF]")
-                callback(toggled)
+            SliderButton.MouseButton1Click:Connect(function()
+                callback(default)
             end)
         end
 
