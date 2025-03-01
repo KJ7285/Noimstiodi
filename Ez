@@ -1,80 +1,105 @@
 local kijb = {}
 
-local UIS = game:GetService("UserInputService")
+-- Toggle Keybind
+local toggleKey = Enum.KeyCode.RightShift
+local libraryOpen = true
 
+-- Create the UI container
 function kijb:CreateLibrary(title)
     local ScreenGui = Instance.new("ScreenGui")
+    local MainFrame = Instance.new("Frame")
+    local UIListLayout = Instance.new("UIListLayout")
+    local TitleLabel = Instance.new("TextLabel")
+    local ToggleButton = Instance.new("TextButton")
+    local TabsHolder = Instance.new("Frame")
+    local TabsList = Instance.new("UIListLayout")
+
     ScreenGui.Parent = game:GetService("CoreGui")
     ScreenGui.ResetOnSpawn = false
 
-    local MainFrame = Instance.new("Frame")
+    -- Main Frame
     MainFrame.Parent = ScreenGui
     MainFrame.Size = UDim2.new(0, 400, 0, 300)
     MainFrame.Position = UDim2.new(0.5, -200, 0.5, -150)
-    MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    MainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
     MainFrame.BorderSizePixel = 0
     MainFrame.Active = true
     MainFrame.Draggable = true
-    MainFrame.Visible = true
 
-    local UICorner = Instance.new("UICorner", MainFrame)
-    UICorner.CornerRadius = UDim.new(0, 10)
-
-    local UIListLayout = Instance.new("UIListLayout")
+    -- UI Layout
     UIListLayout.Parent = MainFrame
     UIListLayout.Padding = UDim.new(0, 5)
-    UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
 
-    local TitleLabel = Instance.new("TextLabel")
+    -- Title Label
     TitleLabel.Parent = MainFrame
     TitleLabel.Size = UDim2.new(1, 0, 0, 40)
-    TitleLabel.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    TitleLabel.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
     TitleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
     TitleLabel.Text = title
     TitleLabel.Font = Enum.Font.GothamBold
     TitleLabel.TextSize = 18
-    TitleLabel.BorderSizePixel = 0
+
+    -- Toggle Button
+    ToggleButton.Parent = MainFrame
+    ToggleButton.Size = UDim2.new(0, 100, 0, 30)
+    ToggleButton.Position = UDim2.new(1, -110, 0, 5)
+    ToggleButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+    ToggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    ToggleButton.Text = "Toggle"
+    ToggleButton.Font = Enum.Font.GothamBold
+    ToggleButton.TextSize = 14
+
+    -- Tabs Holder
+    TabsHolder.Parent = MainFrame
+    TabsHolder.Size = UDim2.new(1, 0, 0, 40)
+    TabsHolder.Position = UDim2.new(0, 0, 0, 50)
+    TabsHolder.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+
+    TabsList.Parent = TabsHolder
+    TabsList.FillDirection = Enum.FillDirection.Horizontal
+    TabsList.Padding = UDim.new(0, 5)
 
     local Library = {}
-    Library.MainFrame = MainFrame
-
-    function Library:ToggleUI()
-        MainFrame.Visible = not MainFrame.Visible
-    end
+    Library.Tabs = {}
 
     function Library:CreateTab(tabName)
-        local Tab = {}
         local TabButton = Instance.new("TextButton")
-        TabButton.Parent = MainFrame
-        TabButton.Size = UDim2.new(1, 0, 0, 40)
+        TabButton.Parent = TabsHolder
+        TabButton.Size = UDim2.new(0, 100, 1, 0)
         TabButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
         TabButton.TextColor3 = Color3.fromRGB(255, 255, 255)
         TabButton.Text = tabName
         TabButton.Font = Enum.Font.GothamBold
-        TabButton.TextSize = 16
-        TabButton.BorderSizePixel = 0
+        TabButton.TextSize = 14
 
         local TabFrame = Instance.new("Frame")
         TabFrame.Parent = MainFrame
-        TabFrame.Size = UDim2.new(1, 0, 0, 250)
-        TabFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-        TabFrame.BorderSizePixel = 0
+        TabFrame.Size = UDim2.new(1, 0, 1, -90)
+        TabFrame.Position = UDim2.new(0, 0, 0, 90)
+        TabFrame.BackgroundTransparency = 1
         TabFrame.Visible = false
 
+        local TabList = Instance.new("UIListLayout")
+        TabList.Parent = TabFrame
+        TabList.Padding = UDim.new(0, 5)
+
+        Library.Tabs[tabName] = TabFrame
+
         TabButton.MouseButton1Click:Connect(function()
-            for _, child in pairs(MainFrame:GetChildren()) do
-                if child:IsA("Frame") and child ~= MainFrame then
-                    child.Visible = false
-                end
+            for _, tab in pairs(Library.Tabs) do
+                tab.Visible = false
             end
             TabFrame.Visible = true
         end)
+
+        local Tab = {}
+        Tab.Frame = TabFrame
 
         function Tab:AddButton(text, callback)
             local Button = Instance.new("TextButton")
             Button.Parent = TabFrame
             Button.Size = UDim2.new(1, 0, 0, 40)
-            Button.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+            Button.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
             Button.TextColor3 = Color3.fromRGB(255, 255, 255)
             Button.Text = text
             Button.Font = Enum.Font.GothamBold
@@ -85,15 +110,34 @@ function kijb:CreateLibrary(title)
             end)
         end
 
+        function Tab:AddToggle(text, callback)
+            local Toggle = Instance.new("TextButton")
+            Toggle.Parent = TabFrame
+            Toggle.Size = UDim2.new(1, 0, 0, 40)
+            Toggle.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+            Toggle.TextColor3 = Color3.fromRGB(255, 255, 255)
+            Toggle.Text = text .. " [OFF]"
+            Toggle.Font = Enum.Font.GothamBold
+            Toggle.TextSize = 16
+
+            local state = false
+
+            Toggle.MouseButton1Click:Connect(function()
+                state = not state
+                Toggle.Text = text .. (state and " [ON]" or " [OFF]")
+                callback(state)
+            end)
+        end
+
         function Tab:AddSlider(text, min, max, default, callback)
             local SliderFrame = Instance.new("Frame")
             SliderFrame.Parent = TabFrame
-            SliderFrame.Size = UDim2.new(1, 0, 0, 40)
+            SliderFrame.Size = UDim2.new(1, 0, 0, 50)
             SliderFrame.BackgroundTransparency = 1
 
             local SliderLabel = Instance.new("TextLabel")
             SliderLabel.Parent = SliderFrame
-            SliderLabel.Size = UDim2.new(0.6, 0, 1, 0)
+            SliderLabel.Size = UDim2.new(0.7, 0, 1, 0)
             SliderLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
             SliderLabel.Text = text .. ": " .. default
             SliderLabel.Font = Enum.Font.GothamBold
@@ -102,13 +146,14 @@ function kijb:CreateLibrary(title)
 
             local SliderButton = Instance.new("TextButton")
             SliderButton.Parent = SliderFrame
-            SliderButton.Size = UDim2.new(0.4, 0, 1, 0)
-            SliderButton.Position = UDim2.new(0.6, 0, 0, 0)
+            SliderButton.Size = UDim2.new(0.3, 0, 1, 0)
+            SliderButton.Position = UDim2.new(0.7, 0, 0, 0)
             SliderButton.Text = "Adjust"
             SliderButton.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
             SliderButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 
             local sliderValue = default
+
             SliderButton.MouseButton1Click:Connect(function()
                 sliderValue = math.clamp(sliderValue + 1, min, max)
                 SliderLabel.Text = text .. ": " .. sliderValue
@@ -116,24 +161,20 @@ function kijb:CreateLibrary(title)
             end)
         end
 
-        function Tab:AddTextbox(text, callback)
-            local TextBox = Instance.new("TextBox")
-            TextBox.Parent = TabFrame
-            TextBox.Size = UDim2.new(1, 0, 0, 40)
-            TextBox.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-            TextBox.TextColor3 = Color3.fromRGB(255, 255, 255)
-            TextBox.Text = text
-            TextBox.Font = Enum.Font.GothamBold
-            TextBox.TextSize = 16
-            TextBox.ClearTextOnFocus = false
-
-            TextBox.FocusLost:Connect(function()
-                callback(TextBox.Text)
-            end)
-        end
-
         return Tab
     end
+
+    -- Toggle UI Visibility
+    ToggleButton.MouseButton1Click:Connect(function()
+        MainFrame.Visible = not MainFrame.Visible
+    end)
+
+    -- Keybind Toggle
+    game:GetService("UserInputService").InputBegan:Connect(function(input, processed)
+        if not processed and input.KeyCode == toggleKey then
+            MainFrame.Visible = not MainFrame.Visible
+        end
+    end)
 
     return Library
 end
