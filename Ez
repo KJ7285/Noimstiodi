@@ -1,13 +1,9 @@
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+
 local kijb = {}
 
--- UI Toggle Keybind
-local toggleKey = Enum.KeyCode.RightShift
-local libraryOpen = true
-
--- Create the UI container
 function kijb:CreateLibrary(title)
-    local UIS = game:GetService("UserInputService")
-
     local ScreenGui = Instance.new("ScreenGui")
     local MainFrame = Instance.new("Frame")
     local TitleLabel = Instance.new("TextLabel")
@@ -15,22 +11,27 @@ function kijb:CreateLibrary(title)
     local TabsHolder = Instance.new("Frame")
     local TabsList = Instance.new("UIListLayout")
 
-    ScreenGui.Parent = game:GetService("CoreGui")
+    ScreenGui.Parent = game.CoreGui
     ScreenGui.ResetOnSpawn = false
 
     -- Main UI Frame
     MainFrame.Parent = ScreenGui
-    MainFrame.Size = UDim2.new(0, 400, 0, 350)
-    MainFrame.Position = UDim2.new(0.5, -200, 0.5, -175)
-    MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    MainFrame.Size = UDim2.new(0, 420, 0, 380)
+    MainFrame.Position = UDim2.new(0.5, -210, 0.5, -190)
+    MainFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 40)
     MainFrame.BorderSizePixel = 0
+    MainFrame.ClipsDescendants = true
     MainFrame.Active = true
-    MainFrame.Draggable = true
+
+    -- Add corner radius
+    local UICorner = Instance.new("UICorner")
+    UICorner.CornerRadius = UDim.new(0, 10)
+    UICorner.Parent = MainFrame
 
     -- Title Label
     TitleLabel.Parent = MainFrame
     TitleLabel.Size = UDim2.new(1, 0, 0, 40)
-    TitleLabel.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    TitleLabel.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
     TitleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
     TitleLabel.Text = title
     TitleLabel.Font = Enum.Font.GothamBold
@@ -40,17 +41,17 @@ function kijb:CreateLibrary(title)
     ToggleButton.Parent = MainFrame
     ToggleButton.Size = UDim2.new(0, 100, 0, 30)
     ToggleButton.Position = UDim2.new(1, -110, 0, 5)
-    ToggleButton.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+    ToggleButton.BackgroundColor3 = Color3.fromRGB(70, 70, 80)
     ToggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-    ToggleButton.Text = "Toggle"
+    ToggleButton.Text = "Close"
     ToggleButton.Font = Enum.Font.GothamBold
     ToggleButton.TextSize = 14
 
     -- Tabs Holder
     TabsHolder.Parent = MainFrame
-    TabsHolder.Size = UDim2.new(1, 0, 0, 40)
-    TabsHolder.Position = UDim2.new(0, 0, 0, 50)
-    TabsHolder.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+    TabsHolder.Size = UDim2.new(1, 0, 0, 50)
+    TabsHolder.Position = UDim2.new(0, 0, 0, 45)
+    TabsHolder.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
 
     TabsList.Parent = TabsHolder
     TabsList.FillDirection = Enum.FillDirection.Horizontal
@@ -62,19 +63,22 @@ function kijb:CreateLibrary(title)
     function Library:CreateTab(tabName)
         local TabButton = Instance.new("TextButton")
         TabButton.Parent = TabsHolder
-        TabButton.Size = UDim2.new(0, 100, 1, 0)
-        TabButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+        TabButton.Size = UDim2.new(0, 120, 1, 0)
+        TabButton.BackgroundColor3 = Color3.fromRGB(55, 55, 65)
         TabButton.TextColor3 = Color3.fromRGB(255, 255, 255)
         TabButton.Text = tabName
         TabButton.Font = Enum.Font.GothamBold
         TabButton.TextSize = 14
 
-        local TabFrame = Instance.new("Frame")
+        local TabFrame = Instance.new("ScrollingFrame")
         TabFrame.Parent = MainFrame
-        TabFrame.Size = UDim2.new(1, 0, 1, -90)
-        TabFrame.Position = UDim2.new(0, 0, 0, 90)
+        TabFrame.Size = UDim2.new(1, 0, 1, -100)
+        TabFrame.Position = UDim2.new(0, 0, 0, 100)
         TabFrame.BackgroundTransparency = 1
         TabFrame.Visible = false
+        TabFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
+        TabFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
+        TabFrame.ScrollBarThickness = 5
 
         local TabList = Instance.new("UIListLayout")
         TabList.Parent = TabFrame
@@ -92,54 +96,38 @@ function kijb:CreateLibrary(title)
         local Tab = {}
         Tab.Frame = TabFrame
 
-        function Tab:AddSlider(text, min, max, default, callback)
-            local SliderFrame = Instance.new("Frame")
-            SliderFrame.Parent = TabFrame
-            SliderFrame.Size = UDim2.new(1, 0, 0, 50)
-            SliderFrame.BackgroundTransparency = 1
+        function Tab:AddButton(text, callback)
+            local Button = Instance.new("TextButton")
+            Button.Parent = TabFrame
+            Button.Size = UDim2.new(1, -20, 0, 40)
+            Button.BackgroundColor3 = Color3.fromRGB(50, 150, 255)
+            Button.TextColor3 = Color3.fromRGB(255, 255, 255)
+            Button.Text = text
+            Button.Font = Enum.Font.GothamBold
+            Button.TextSize = 16
 
-            local SliderLabel = Instance.new("TextLabel")
-            SliderLabel.Parent = SliderFrame
-            SliderLabel.Size = UDim2.new(0.7, 0, 1, 0)
-            SliderLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-            SliderLabel.Text = text .. ": " .. default
-            SliderLabel.Font = Enum.Font.GothamBold
-            SliderLabel.TextSize = 16
-            SliderLabel.BackgroundTransparency = 1
-
-            local SliderBar = Instance.new("Frame")
-            SliderBar.Parent = SliderFrame
-            SliderBar.Size = UDim2.new(0.3, 0, 0.5, 0)
-            SliderBar.Position = UDim2.new(0.7, 0, 0.25, 0)
-            SliderBar.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
-
-            local SliderButton = Instance.new("Frame")
-            SliderButton.Parent = SliderBar
-            SliderButton.Size = UDim2.new(0, 10, 1, 0)
-            SliderButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-
-            local function updateSlider(input)
-                local absSize = SliderBar.AbsoluteSize.X
-                local relPos = math.clamp((input.Position.X - SliderBar.AbsolutePosition.X) / absSize, 0, 1)
-                SliderButton.Position = UDim2.new(relPos, -5, 0, 0)
-                local value = math.floor(min + (max - min) * relPos)
-                SliderLabel.Text = text .. ": " .. value
-                callback(value)
-            end
-
-            SliderButton.InputBegan:Connect(function(input)
-                if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-                    updateSlider(input)
-                end
+            Button.MouseButton1Click:Connect(function()
+                callback()
             end)
+        end
 
-            UIS.InputChanged:Connect(function(input)
-                if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-                    updateSlider(input)
-                end
+        function Tab:AddToggle(text, callback)
+            local Toggle = Instance.new("TextButton")
+            Toggle.Parent = TabFrame
+            Toggle.Size = UDim2.new(1, -20, 0, 40)
+            Toggle.BackgroundColor3 = Color3.fromRGB(255, 100, 100)
+            Toggle.TextColor3 = Color3.fromRGB(255, 255, 255)
+            Toggle.Text = text .. " [OFF]"
+            Toggle.Font = Enum.Font.GothamBold
+            Toggle.TextSize = 16
+
+            local toggled = false
+            Toggle.MouseButton1Click:Connect(function()
+                toggled = not toggled
+                Toggle.BackgroundColor3 = toggled and Color3.fromRGB(100, 255, 100) or Color3.fromRGB(255, 100, 100)
+                Toggle.Text = text .. (toggled and " [ON]" or " [OFF]")
+                callback(toggled)
             end)
-
-            return SliderFrame
         end
 
         return Tab
@@ -147,14 +135,8 @@ function kijb:CreateLibrary(title)
 
     -- Toggle UI Visibility
     ToggleButton.MouseButton1Click:Connect(function()
-        MainFrame.Visible = not MainFrame.Visible
-    end)
-
-    -- Keybind Toggle
-    UIS.InputBegan:Connect(function(input, processed)
-        if not processed and input.KeyCode == toggleKey then
-            MainFrame.Visible = not MainFrame.Visible
-        end
+        local targetSize = MainFrame.Size == UDim2.new(0, 420, 0, 380) and UDim2.new(0, 420, 0, 0) or UDim2.new(0, 420, 0, 380)
+        TweenService:Create(MainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = targetSize}):Play()
     end)
 
     return Library
